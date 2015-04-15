@@ -1,6 +1,6 @@
 # NAME
 
-HTML::ExtractText - extract multiple text strings from HTML content, using CSS selectors
+HTML::ExtractText::Extra - extra useful HTML::ExtractText
 
 # SYNOPSIS
 
@@ -10,53 +10,23 @@ At its simplest; use CSS selectors:
     <div style="display: table; height: 91px; background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/section-code.png) no-repeat left; padding-left: 120px;" ><div style="display: table-cell; vertical-align: middle;">
 </div>
 
-    use HTML::ExtractText;
-    my $ext = HTML::ExtractText->new;
-    $ext->extract({ page_title => 'title' }, $html) or die "Error: $ext";
-    print "Page title is $ext->{page_title}\n";
+    # Same usage as HTML::ExtractText, but now we have extra
+    # optional options (default values are shown):
+    use HTML::ExtractText::Extra;
+    my $ext = HTML::ExtractText::Extra->new(
+        whitespace => 1, # strip leading/trailing whitespace
+        nbsp       => 1, # replace non-breaking spaces with regular ones
+    );
 
-<div>
-    </div></div>
-</div>
-
-We can go fancy pants with selectors as well as
-extract more than one bit of text:
-
-<div>
-    <div style="display: table; height: 91px; background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/section-code.png) no-repeat left; padding-left: 120px;" ><div style="display: table-cell; vertical-align: middle;">
-</div>
-
-    use HTML::ExtractText;
-    my $ext = HTML::ExtractText->new;
     $ext->extract(
         {
-            article   => 'article#main_content',
-            irc_links => 'article#main_content a[href^="irc://"]',
+            page_title => 'title', # same extraction as HTML::ExtractText
+            links => ['a', qr{http://|www\.} ], # strip what matches
+            bold  => ['b', sub { "<$_[0]>"; } ], # wrap what's found in <>
         },
         $html,
     ) or die "Error: $ext";
-
-    print "IRC links:\n$ext->{irc_links}\n";
-    print "Full text:\n$ext->{article}\n";
-
-<div>
-    </div></div>
-</div>
-
-We can also pass in an object and let the extractor call
-setter methods on it when it extracts text:
-
-<div>
-    <div style="display: table; height: 91px; background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/section-code.png) no-repeat left; padding-left: 120px;" ><div style="display: table-cell; vertical-align: middle;">
-</div>
-
-    use HTML::ExtractText;
-    my $ext = HTML::ExtractText->new;
-    $ext->extract({ title => 'title' }, $html_code, $some_object )
-        or die "Error: $ext";
-
-    print "Our object's ->title method is now set to:",
-        $some_object->title, "\n";
+    print "Page title is $ext->{page_title}\nLinks are: $ext->{links}";
 
 <div>
     </div></div>
@@ -64,278 +34,93 @@ setter methods on it when it extracts text:
 
 # DESCRIPTION
 
-The module allows to extract \[multiple\] text strings from HTML documents,
-using CSS selectors to declare what text needs extracting. The module
-can either return the results as a hashref or automatically call
-setter methods on a provided object.
+The module offers extra options and postprocessing that the vanilla
+[HTML::ExtractText](https://metacpan.org/pod/HTML::ExtractText) does not provide.
 
-If you're looking for extra automatic post-processing and laxer
-definition of what constitutes "text", see [HTML::ExtractText::Extra](https://metacpan.org/pod/HTML::ExtractText::Extra).
+# METHODS FROM `HTML::ExtractText`
 
-# OVERLOADED METHODS
+This module offers all the standard methods and behaviour
+`HTML::ExtractText` provides. See its documentation for details.
 
-    $extractor->extract(
-        { stuff => 'title', },
-        '<title>My html code!</title>',
-        bless {}, 'Foo',
-    ) or die "Extraction error: $extractor";
+# EXTRA OPTIONS IN `->new`
 
-    print "Title is: $extractor->{stuff}\n\n";
-
-The module incorporates two overloaded methods `->error()`, which
-is overloaded for interpolation (`use overload q|""| ...`),
-and `->last_result()`,
-which is overloaded for hash dereferencing
-(`use overload q|%{}| ...`).
-
-What this means is that you can interpolate the object in a string
-to retrieve the error message and you can use the object as a hashref
-to access the hashref returned by `->last_results()`.
-
-# METHODS
-
-## `->new()`
-
-<div>
-    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-key-value.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-object.png">
-</div>
-
-    my $extractor = HTML::ExtractText->new;
-
-    my $extractor = HTML::ExtractText->new(
-        separator        => "\n",
-        ignore_not_found => 1,
-    ); # default values for arguments are shown
-
-Creates and returns new `HTML::ExtractText` object. Takes optional
-arguments as key/value pairs:
-
-### `separator`
-
-    my $extractor = HTML::ExtractText->new(
-        separator => "\n", # default value
+    my $ext = HTML::ExtractText::Extra->new(
+        whitespace => 1, # strip leading/trailing whitespace
+        nbsp       => 1, # replace non-breaking spaces with regular ones
     );
 
-    my $extractor = HTML::ExtractText->new(
-        separator => undef,
+## `whitespace`
+
+    my $ext = HTML::ExtractText::Extra->new(
+        whitespace => 1,
     );
 
-**Optional**. **Default:** `\n` (new line).
-Takes `undef` or a string as a value.
-Specifies what to do when CSS selector matches multiple
-elements. If set to a string value, text from all the matching
-elements will be joined using that string. If set to `undef`,
-no joining will happen and results will be returned as arrayrefs
-instead of strings (even if selector matches a single element).
+**Optional**. **Defaults to:** `1`. When set to a true value,
+leading and trailing whitespace will be trimmed from the results.
 
-### `ignore_not_found`
+## `nbsp`
 
-    my $extractor = HTML::ExtractText->new(
-        ignore_not_found => 1,  # default value
+    my $ext = HTML::ExtractText::Extra->new(
+        nbsp => 1,
     );
 
-    my $extractor = HTML::ExtractText->new(
-        ignore_not_found => 0,
-    );
+**Optional**. **Defaults to:** `1`. When set to a true value,
+non-breaking spaces in the results will be converted into regular spaces.
+Note that this does not affect how the normal white-space folding
+operates, so `foo &nbsp; bar` will end up having 3 spaces between
+`foo` and `bar`.
 
-**Optional**. **Default:** `1` (true). Takes true or false values
-as a value. Specifies whether to consider it an error when any
-of the given selectors match nothing. If set to a true value,
-any non-matching selectors will have empty strings as values and no
-errors will be reported. If set to a false value, all selectors must
-match at least one element or the module will error out.
+# EXTRA PROCESSING OPERATIONS IN `->extract`
 
-## `->extract()`
+    $ext->extract(
+        {
+            page_title => 'title', # same extraction as HTML::ExtractText
+            links => ['a', qr{http://|www\.} ],  # strip what matches
+            bold  => ['b', sub { "<$_[0]>"; } ], # wrap what's found in <>
+        },
+        $html,
+    ) or die "Error: $ext";
 
-<div>
-    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
-</div>
+This module extends possible values in the hashref given as the first
+argument to `->extract` method. They are given by changing
+the string containing the selector to an arrayref, where the first element
+is the selector you want to match and the rest of the elements are as
+follows:
 
-    my $results = $extractor->extract(
-        { stuff => 'title', },
-        '<title>My html code!</title>',
-        $some_object, # optional
-    ) or die "Extraction error: $extractor";
+## Regex reference
 
-    print "Title is: $extractor->{stuff}\n\n";
-    # $extractor->{stuff} is the same as $results->{stuff}
+    $ext->extract({ links => ['a', qr{http://|www\.} ] }, $html )
 
-Takes **two mandatory** and **one optional** arguments. Extracts text from
-given HTML code and returns a hashref with results (
-    see `->last_results()` method
-). On error, returns
-`undef` or empty list and the error will be available via
-`->error()` method. Even if errors occurred, anything that
-was successfully extracted will still be available through
-`->last_results()` method.
+When second element of the arrayref is a regex reference,
+any text that matches the regex will be stripped from the text
+that is being extracted.
 
-### first argument
+## Code reference
 
-    $extractor->extract(
-        { stuff => 'title', },
-        ... ,
-        ... ,
-    ) or die "Extraction error: $extractor";
+     $ext->extract({ links => ['a', sub { "<$_[0]>"; } ] }, $html )
 
-Must be a hashref. The keys can be whatever you want; you will use them
-to refer to the extracted text. The values must be CSS selectors that
-match the elements you want to extract text from.
-All the selectors listed on
-[https://metacpan.org/pod/Mojo::DOM::CSS#SELECTORS](https://metacpan.org/pod/Mojo::DOM::CSS#SELECTORS) are supported.
-
-Note: the values will be modified in place in the original
-hashref you provided, so you can use that
-to your advantage, if needed.
-
-### second argument
-
-    $extractor->extract(
-        ... ,
-        '<title>My html code!</title>',
-        ... ,
-    ) or die "Extraction error: $extractor";
-
-Takes a string that is HTML code you're trying to extract text from.
-
-### third argument
-
-    $extractor->extract(
-        { stuff => 'title', },
-        '<title>My html code!</title>',
-        $some_object,
-    ) or die "Extraction error: $extractor";
-
-    # this is what is being done automatically, during extraction,
-    # for each key in the first argument of ->extract():
-    # $some_object->stuff( $extractor->{stuff} );
-
-**Optional**. No defaults. For convenience, you can supply an object and
-`HTML::ExtractText` will call methods on it. The called methods
-will be the keys of the first argument given to `->extract()` and
-the extracted text will be given to those methods as the first argument.
-
-<div>
-    <div style="background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/hr.png);height: 18px;"></div>
-</div>
+When second element of the arrayref is a code reference, it will be
+called for each found bit of text we're extracting and its `@_` will
+contain that text as the first element. Whatever the sub returns will
+be used as the result of extraction.
 
 # ACCESSORS
 
-## `->error()`
+## `whitespace`
 
-<div>
-    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-scalar-optional.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
-</div>
+    $ext->whitespace(0);
 
-    $extractor->extract(
-        { stuff => 'title', },
-        '<title>My html code!</title>',
-    ) or die "Extraction error: " . $extractor->error;
+Accessor method for the `whitespace` argument to `->new`.
 
-    $extractor->extract(
-        { stuff => 'title', },
-        '<title>My html code!</title>',
-    ) or die "Extraction error: $extractor";
+## `nbsp`
 
-Takes no arguments. Returns the error message as a string, if any occurred
-during the last call to `->extract()`. Note that
-`->error()` will only return one of the error messages, even
-if more than one selector failed. Examine the hashref returned
-by `->last_results()` to find all the errors;
-for any selector that errored out, the value will begin with
-`"ERROR: "` and the error message will be there.
+    $ext->nbsp(0);
 
-## `->last_results()`
-
-<div>
-    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-scalar-optional.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
-</div>
-
-    $extractor->extract(
-        { stuff => 'title', },
-        '<title>My html code!</title>',
-    ) or die "Extraction error: $extractor";
-
-    print "Stuff is " . $extractor->last_results->{stuff} . "\n";
-
-    # or
-
-    print "Stuff is $extractor->{stuff}\n";
-
-Takes no arguments. Returns the same hashref
-the last call to `->extract` did. If `->extract`
-failed, you can still use `->last_results()` to get
-anything that didn't error out (the error messages will be in the values
-of failed keys).
-
-The hashref will contain the same keys as the first argument
-to `->extract()` had and the values will be replaced with
-whatever the selectors matched.
-
-If `separator` (see `->new()`) is set to `undef`, the values
-will be arrayrefs, with each item in those arrayrefs corresponding
-to one matched element in HTML.
-
-## `->separator()`
-
-<div>
-    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-scalar-optional.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
-</div>
-
-    $extractor->separator("\n");
-    $extractor->separator(undef);
-
-Accessor to `separator` option (see `->new()`).
-Takes one optional argument, which if provided, will become the
-new separator.
-
-## `->ignore_not_found()`
-
-<div>
-    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-scalar-optional.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
-</div>
-
-    $extractor->ignore_not_found(1);
-    $extractor->ignore_not_found(0);
-
-Accessor to `ignore_not_found` option (see `->new()`).
-Takes one optional argument, which if provided, will become the
-new value of `ignore_not_found` option.
-
-# SUBCLASSING
-
-## `->extra_processing()`
-
-    sub extra_processing {
-        my ( $self, $results, $dom, $selector, $what ) = @_;
-
-        ...
-    }
-
-This module offers a method you can subclass. It will be called for
-each selector given in the first argument to `->extract()`.
-Its `@_` will contain:
-your class object, results arrayref with any found text—it will always
-be an arrayref, regardless of the value of `separator`—, a
-[Mojo::DOM](https://metacpan.org/pod/Mojo::DOM) object with html we're processing, the current selector
-we're working on (that's the keys of the first argument
-to `->extract()`), and the hashref passed as the first
-argument to `->extract()`.
-
-# NOTES AND CAVEATS
-
-## Encoding
-
-This module does not automatically encode extracted text, so the
-examples in this documentation should really include something akin to:
-
-    use Encode;
-
-    my $title = encode 'utf8', $ext->{page_title};
-    print "$title\n";
+Accessor method for the `nbsp` argument to `->new`.
 
 # SEE ALSO
 
-[HTML::ExtractText::Extra](https://metacpan.org/pod/HTML::ExtractText::Extra) - a subclass that offers extra features
+[HTML::ExtractText](https://metacpan.org/pod/HTML::ExtractText) - a basic version of this extractor
 
 [Mojo::DOM](https://metacpan.org/pod/Mojo::DOM), [Text::Balanced](https://metacpan.org/pod/Text::Balanced), [HTML::Extract](https://metacpan.org/pod/HTML::Extract)
 
@@ -350,7 +135,7 @@ examples in this documentation should really include something akin to:
 </div>
 
 Fork this module on GitHub:
-[https://github.com/zoffixznet/HTML-ExtractText](https://github.com/zoffixznet/HTML-ExtractText)
+[https://github.com/zoffixznet/HTML-ExtractText-Extra](https://github.com/zoffixznet/HTML-ExtractText-Extra)
 
 <div>
     </div></div>
@@ -363,10 +148,10 @@ Fork this module on GitHub:
 </div>
 
 To report bugs or request features, please use
-[https://github.com/zoffixznet/HTML-ExtractText/issues](https://github.com/zoffixznet/HTML-ExtractText/issues)
+[https://github.com/zoffixznet/HTML-ExtractText-Extra/issues](https://github.com/zoffixznet/HTML-ExtractText-Extra/issues)
 
 If you can't access GitHub, you can email your request
-to `bug-html-extracttext at rt.cpan.org`
+to `bug-html-extracttext-extra at rt.cpan.org`
 
 <div>
     </div></div>
