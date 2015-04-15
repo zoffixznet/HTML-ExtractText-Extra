@@ -145,7 +145,7 @@ C<foo> and C<bar>.
     $ext->extract(
         {
             page_title => 'title', # same extraction as HTML::ExtractText
-            links => ['a', qr{http://|www\.} ], # strip what matches
+            links => ['a', qr{http://|www\.} ],  # strip what matches
             bold  => ['b', sub { "<$_[0]>"; } ], # wrap what's found in <>
         },
         $html,
@@ -153,7 +153,7 @@ C<foo> and C<bar>.
 
 This module extends possible values in the hashref given as the first
 argument to C<< ->extract >> method. They are given by changing
-a string containing selector to an arrayref, where the first element
+the string containing the selector to an arrayref, where the first element
 is the selector you want to match and the rest of the elements are as
 follows:
 
@@ -161,8 +161,9 @@ follows:
 
     $ext->extract({ links => ['a', qr{http://|www\.} ] }, $html )
 
-When second element of the arrayref is a regex reference, extracted
-text will be stripped from any text that matches the regex.
+When second element of the arrayref is a regex reference,
+any text that matches the regex will be stripped from the text
+that is being extracted.
 
 =head2 Code reference
 
