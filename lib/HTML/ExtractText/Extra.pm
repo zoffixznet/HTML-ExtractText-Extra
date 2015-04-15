@@ -110,7 +110,7 @@ L<HTML::ExtractText> does not provide.
 =head1 METHODS FROM C<HTML::ExtractText>
 
 This module offers all the standard methods and behaviour
-C<HTML::ExtractText> provides. See its documentation for details.
+L<HTML::ExtractText> provides. See its documentation for details.
 
 =head1 EXTRA OPTIONS IN C<< ->new >>
 
