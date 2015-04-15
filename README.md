@@ -34,7 +34,7 @@ At its simplest; use CSS selectors:
 
 # DESCRIPTION
 
-The module offers extra options and postprocessing that the vanilla
+The module offers extra options and post-processing that the vanilla
 [HTML::ExtractText](https://metacpan.org/pod/HTML::ExtractText) does not provide.
 
 # METHODS FROM `HTML::ExtractText`

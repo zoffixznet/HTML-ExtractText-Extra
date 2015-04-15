@@ -104,7 +104,7 @@ At its simplest; use CSS selectors:
 
 =head1 DESCRIPTION
 
-The module offers extra options and postprocessing that the vanilla
+The module offers extra options and post-processing that the vanilla
 L<HTML::ExtractText> does not provide.
 
 =head1 METHODS FROM C<HTML::ExtractText>
