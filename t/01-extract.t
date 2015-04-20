@@ -53,6 +53,7 @@ use HTML::ExtractText::Extra;
         'changedefault ignore_not_found through accessor';
 }
 
+diag "\nChecking advanced extraction procedures";
 { # check basic extraction
     my $ext = HTML::ExtractText::Extra->new;
     my $result = $ext->extract(
@@ -68,6 +69,32 @@ use HTML::ExtractText::Extra;
         p => "Paras1\nParas2",
         a => 'Link',
         b => '[Foo]',
+    };
+
+    cmp_deeply $result, $expected_result, 'return of ->extract';
+    cmp_deeply +{%$ext}, $expected_result, 'hash interpolation of object';
+    cmp_deeply $ext->last_results, $expected_result,
+        'return from ->last_results()';
+}
+
+diag "\nChecking stripping of trash";
+{ # check stripping of trash
+    my $ext = HTML::ExtractText::Extra->new;
+    my $result = $ext->extract(
+        {
+            p => 'p',
+            a => [ '[href]', qr/a.+/ ],
+            b => [ 'b', sub { return "[$_[0]]" } ],
+            span => 'span',
+        },
+        qq{<p> &nbsp;Paras1 </p><a href="#">Lin&nbsp;kas</a><p>Paras2</p><b>Foo&nbsp;\n</b><span> \n</span>},
+    );
+
+    my $expected_result = {
+        p => "Paras1\nParas2",
+        a => 'Lin k',
+        b => '[Foo]',
+        span => '',
     };
 
     cmp_deeply $result, $expected_result, 'return of ->extract';
