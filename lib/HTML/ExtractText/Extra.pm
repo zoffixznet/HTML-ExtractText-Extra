@@ -41,7 +41,7 @@ sub _extract {
 
     for ( @results ) {
         $self->nbsp       and tr/\x{00A0}/ /;
-        $self->whitespace and s/^\s+|\s+$//g;
+        $self->whitespace and s/^\s+|\s+\z//g;
         if ( ref $want eq 'ARRAY' ) {
             if ( ref $want->[1] eq 'Regexp' ) {
                 s/$want->[1]//g;
