@@ -7,11 +7,23 @@ use warnings;
 
 use parent 'HTML::ExtractText';
 
+use Devel::TakeHashArgs;
+use Carp qw/croak/;
+
 sub new {
     my $class = shift;
-    my $self = $class->SUPER::new( @_ );
-    $self->whitespace(1);
-    $self->nbsp(1);
+
+    get_args_as_hash( \@_, \ my %args,
+        {   # these are optional with defaults
+            whitespace       => 1,
+            nbsp             => 1,
+        },
+    ) or croak $@;
+
+    my $self = $class->SUPER::new;
+
+    $self->$_( $args{$_} ) for keys %args;
+
     return $self;
 }
 
